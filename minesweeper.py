@@ -1,59 +1,75 @@
 from random import randint, seed
 
-def tabuleiro_soma_1(tabuleiro, linha, coluna):
-    # concertar os comentários as posições estão erradas provavelmente
-    if linha < 8:
-        if tabuleiro[linha + 1][coluna] != '*': tabuleiro[linha + 1][coluna] += 1 # topo centro
+# Funções de validação
 
-    if linha > 0:
-        if tabuleiro[linha - 1][coluna] != '*': tabuleiro[linha - 1][coluna] += 1 # baixo centro
+def validar_nao_vazio(entrada):
+    """ Valida se entrada não é vazia, e se for, dá throw em um novo erro.
+    str -> None
+    """
+    if not entrada:
+        raise TypeError('Entrada vazia. Digite algo.\n')
 
-    if coluna < 8:
-        if tabuleiro[linha][coluna + 1] != '*': tabuleiro[linha][coluna + 1] += 1 # direita centro
+def validar_numero(txt):
+    """ Valida se o texto é um número, e se não for, dá throw em um novo erro.
+    str -> None
+    """
+    if not txt.isnumeric():
+        raise TypeError('O texto digitado não é numérico.\n')
 
-    if coluna > 0:
-        if tabuleiro[linha][coluna - 1] != '*': tabuleiro[linha][coluna - 1] += 1 # esquerda centro
+def validar_in_range(min, max, num):
+    """ Valida se o número está entre o mínimo e o máxmio, e se não estiver, dá throw em um novo erro.
+    int, int, int -> None
+    """
+    if num < min or num > max:
+        raise IndexError('Número digitado fora do alcance. Mínimo: ' + str(min) + ', máximo: ' + str(max) + '.\n')
 
-    if linha < 8 and coluna < 8:
-        if tabuleiro[linha + 1][coluna + 1] != '*': tabuleiro[linha + 1][coluna + 1] += 1 # topo direita
+def validar_resposta(resposta):
+    """ Valida se a resposta é sim, sim, n, nao ou não, e se não for, recursivamente pede novamente a entrada.
+    str -> str
+    """
+    if not resposta.lower() in ['s', 'sim', 'n', 'nao', 'não']:
+        resposta = input('Resposta inválida. Digite "S" / "Sim", ou "N" / "Nao" / "Não". ')
+        return validar_resposta(resposta)
+    else:
+        return resposta
 
-    if linha < 8 and coluna > 0:
-        if tabuleiro[linha + 1][coluna - 1] != '*': tabuleiro[linha + 1][coluna - 1] += 1 # topo esquerda
+def validar_jogada(jogadas, linha, coluna):
+    """ Valida se a jogada já foi feita, e se já foi feita, imprime uma mensagem dizendo que já foi realizada.
+    list, int, int -> None
+    """
+    if [linha, coluna] in jogadas:
+        print('Você já realizou essa jogada.')
+    else:
+        jogadas.append([linha, coluna])
 
-    if linha > 0 and coluna < 8:
-        if tabuleiro[linha - 1][coluna + 1] != '*': tabuleiro[linha - 1][coluna + 1] += 1 # baixo direita
-
-    if linha > 0 and coluna > 0:
-        if tabuleiro[linha - 1][coluna - 1] != '*': tabuleiro[linha - 1][coluna - 1] += 1 # baixo esquerda
-
-def printar_tabuleiro(tabuleiro):
-    colors = {
-        '*': '\033[1m\033[31m', # bold and red
-        0: '\033[39m', # white
-        1: '\033[34m', # blue
-        2: '\033[32m', # green
-        3: '\033[33m', # orange
-        4: '\033[35m', # yellow
-        5: '\033[36m', # cyan
-        6: '\033[36m', # cyan
-        7: '\033[30m', # gray
-    }
-    for i in range(len(tabuleiro)):
-        linha = ''
-        for j in tabuleiro[i]:
-            j = colors[j] + str(j) + '\033[0m'
-            j = str(j)
-            linha += j + ' '
-        print(linha)
+# Geração do tabuleiro e das bombas
 
 def gerar_tabuleiro():
+    """ Gera um tabuleiro novo, uma matriz com 9 linhas e 9 colunas, totalizando 81 posições.
+    None -> list
+    """
     tabuleiro = []
     for i in range(9):
         tabuleiro.append([0] * 9)
     return tabuleiro
 
 def gerar_bombas(tabuleiro, num_bombas):
-    seed(9001)
+    """ Adiciona num_bombas bombas em posições aleatórias no tabuleiro, e retorna as posições das bombas.
+    list, int -> list
+    """
+    # Se quiser testar, só tirar o comentário da próxima linha:
+    # seed(9001)
+    # a aleatoriedade perde sua propriedade e gera o seguinte tabuleiro:
+    #   1 2 3 4 5 6 7 8 9
+    # 1 0 0 0 1 * 1 0 1 1
+    # 2 0 0 0 1 1 1 0 1 *
+    # 3 0 0 1 1 1 0 0 1 1
+    # 4 1 1 3 * 2 0 0 1 1
+    # 5 1 * 3 * 2 0 0 1 *
+    # 6 1 1 2 1 1 0 0 1 1
+    # 7 0 1 2 2 1 1 1 1 0
+    # 8 0 1 * * 2 2 * 1 0
+    # 9 0 1 2 2 2 * 2 1 0
     bombas = []
     for i in range(num_bombas):
         linha = randint(0, 8)
@@ -61,22 +77,144 @@ def gerar_bombas(tabuleiro, num_bombas):
         while [linha, coluna] in bombas:
             linha = randint(0, 8)
             coluna = randint(0, 8)
-        tabuleiro[linha][coluna] = '*'
+        tabuleiro[linha][coluna] = 'm'
         bombas.append([linha, coluna])
         tabuleiro_soma_1(tabuleiro, linha, coluna)
     return bombas
 
-def printar_tabuleiro_normal():
-    for i in range(9):
-        linha = ''
-        for j in range(9):
-            linha += '. '
+def tabuleiro_soma_1(tabuleiro, linha, coluna):
+    """ Adiciona +1 aos arredores da posição de linha "linha" e coluna "coluna",
+    sempre verificando se a posição a ser adicionada não passa do tabuleiro e se
+    a posição a ser adicionada não é uma bomba.
+    list, int, int -> None
+    """
+
+    if linha < 8:
+        if tabuleiro[linha + 1][coluna] != 'm': tabuleiro[linha + 1][coluna] += 1 # baixo centro
+
+    if linha > 0:
+        if tabuleiro[linha - 1][coluna] != 'm': tabuleiro[linha - 1][coluna] += 1 # topo centro
+
+    if coluna < 8:
+        if tabuleiro[linha][coluna + 1] != 'm': tabuleiro[linha][coluna + 1] += 1 # direita centro
+
+    if coluna > 0:
+        if tabuleiro[linha][coluna - 1] != 'm': tabuleiro[linha][coluna - 1] += 1 # esquerda centro
+
+    if linha < 8 and coluna < 8:
+        if tabuleiro[linha + 1][coluna + 1] != 'm': tabuleiro[linha + 1][coluna + 1] += 1 # baixo direita
+
+    if linha < 8 and coluna > 0:
+        if tabuleiro[linha + 1][coluna - 1] != 'm': tabuleiro[linha + 1][coluna - 1] += 1 # baixo esquerda
+
+    if linha > 0 and coluna < 8:
+        if tabuleiro[linha - 1][coluna + 1] != 'm': tabuleiro[linha - 1][coluna + 1] += 1 # topo direita
+
+    if linha > 0 and coluna > 0:
+        if tabuleiro[linha - 1][coluna - 1] != 'm': tabuleiro[linha - 1][coluna - 1] += 1 # topo esquerda
+
+# Funções apenas para imprimir o tabuleiro
+
+def printar_tabuleiro_inteiro(tabuleiro):
+    """ Imprime o tabuleiro formatada corretamente,
+    indicando as posições para auxiliar o usuário a escolher a posição corretamente.
+    list -> None
+    """
+    print('\n    1 2 3 4 5 6 7 8 9')
+    print('   ' + '―' * 18)
+    count = 1
+    for i in range(len(tabuleiro)):
+        linha = str(count) + ' | '
+        for j in tabuleiro[i]:
+            j = str(j)
+            linha += j + ' '
+        count += 1
         print(linha)
+    print('')
+
+def printar_tabuleiro_apos_jogada(tabuleiro_final, jogadas):
+    """ Após uma série de jogadas que foram feitas,
+    imprime na tela um tabuleiro com pontinhos nas posições que não foram reveladas,
+    e o número correspondente ao tabuleiro que já foi gerado nas posições que foram jogadas.
+    list, list -> None
+    """
+    tabuleiro_printado = gerar_tabuleiro()
+    for i in range(9):
+        for j in range(9):
+            tabuleiro_printado[i][j] = '.'
+
+    for i in jogadas:
+        linha = i[0]
+        coluna = i[1]
+        tabuleiro_printado[linha][coluna] = tabuleiro_final[linha][coluna]
+    printar_tabuleiro_inteiro(tabuleiro_printado)
+
+# Main
 
 def main():
-    tabuleiro = gerar_tabuleiro()
-    bombas = gerar_bombas(tabuleiro, 5)
-    printar_tabuleiro(tabuleiro)
+    """ Função principal, que realiza a interação com o usuário e une com as funções de apoio, anteriormente definidas.
+    None -> None
+    """
+    try:
+        tabuleiro_final = gerar_tabuleiro()
+        bombas = gerar_bombas(tabuleiro_final, 10)
+        jogadas = []
+        print ('Bem-vindo ao campo minado.')
+        print(r"""
+                ,--.!,
+    Cuidado    __/   -*-
+    com as   ,d08b.  '|`
+    minas    0088MM
+    !!!!!    `9MMP'
+        """)
+        printar_tabuleiro_apos_jogada(tabuleiro_final, jogadas)
+        resposta = input('Digite "S" ou "Sim" para jogar, ou "N" ou "Não" para não jogar. ')
+        resposta = validar_resposta(resposta)
+        while resposta.lower() in ['s', 'sim']:
+            linha = input('Digite a linha que deseja jogar: ')
+
+            validar_nao_vazio(linha)
+            validar_numero(linha)
+
+            linha = int(linha) - 1
+
+            validar_in_range(1, 9, linha + 1)
+
+            coluna = input('Digite a coluna que deseja jogar: ')
+
+            validar_nao_vazio(coluna)
+            validar_numero(coluna)
+
+            coluna = int(coluna) - 1
+
+            validar_in_range(1, 9, coluna + 1)
+            validar_jogada(jogadas, linha, coluna)
+            printar_tabuleiro_apos_jogada(tabuleiro_final, jogadas)
+
+            if [linha, coluna] in bombas:
+                print(r"""Você pisou em uma mina e explodiu.
+
+    \         .  ./
+  \      .:";'.:.."   /
+      (M^^.^~~:.'").
+-   (/  .    . . \ \)  -
+   ((| :. ~ ^  :. .|))
+-   (\- |  \ /  |  /)  -
+     -\  \     /  /-
+       \  \   /  /
+
+Você perdeu.""")
+                tabuleiro_final[linha][coluna] = 'M'
+                print('\nO tabuleiro inteiro:')
+                return printar_tabuleiro_inteiro(tabuleiro_final)
+            elif len(jogadas) == 71:
+                return print('Você venceu o campo minado. Parabéns.')
+            else:
+                resposta = input('Digite "S" ou "Sim" para continuar jogando, ou "N" ou "Não" para desistir. ')
+                resposta = validar_resposta(resposta)
+        print('Obrigado por conferir meu campo minado. Volte sempre.')
+    except Exception as error:
+        print('Ocorreu um erro.', error)
 
 if __name__ == '__main__':
     main()
