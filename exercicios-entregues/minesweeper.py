@@ -120,27 +120,12 @@ def printar_tabuleiro_inteiro(tabuleiro):
     indicando as posições para auxiliar o usuário a escolher a posição corretamente.
     list -> None
     """
-    colors = {
-        'm': '\033[31m', # red
-        'M': '\033[1m\033[31m', # bold and red
-        '.': '\033[39m', # white
-        0: '\033[39m', # white
-        1: '\033[34m', # blue
-        2: '\033[32m', # green
-        3: '\033[33m', # orange
-        4: '\033[35m', # yellow
-        5: '\033[36m', # cyan
-        6: '\033[36m', # cyan
-        7: '\033[30m', # gray
-    }
-
     print('\n    1 2 3 4 5 6 7 8 9')
     print('   ' + '―' * 18)
     count = 1
     for i in range(len(tabuleiro)):
         linha = str(count) + ' | '
         for j in tabuleiro[i]:
-            j = colors[j] + str(j) + '\033[0m'
             j = str(j)
             linha += j + ' '
         count += 1
@@ -182,16 +167,14 @@ def main():
     !!!!!    `9MMP'
         """)
     printar_tabuleiro_apos_jogada(tabuleiro_final, jogadas)
-    ocorreuErro = False
     resposta = input('Digite "S" ou "Sim" para jogar, ou "N" ou "Não" para não jogar. ')
-    while not(resposta.lower() in ['n', 'nao', 'não']) and not ocorreuErro:
+    resposta = validar_resposta(resposta)
+    while resposta.lower() in ['s', 'sim']:
         linha = input('Digite a linha que deseja jogar: ')
 
         erro = validar_nao_vazio(linha)
         if erro:
-            print('Ocorreu um erro.', erro)
-            ocorreuErro = True
-            continue
+            return print('Ocorreu um erro.', erro)
 
         erro = validar_numero(linha)
         if erro:
@@ -240,6 +223,9 @@ Você perdeu.""")
             return printar_tabuleiro_inteiro(tabuleiro_final)
         elif len(jogadas) == 71:
             return print('Você venceu o campo minado. Parabéns.')
+        else:
+            resposta = input('Digite "S" ou "Sim" para continuar jogando, ou "N" ou "Não" para desistir. ')
+            resposta = validar_resposta(resposta)
     print('Obrigado por conferir meu campo minado. Volte sempre.')
 
 if __name__ == '__main__':
